@@ -1,0 +1,130 @@
+import random
+import string
+import matplotlib.pylab as plt
+import time 
+import pandas as pd
+
+# Función para generar un nombre aleatorio
+def generar_nombre():
+    letras = random.sample(string.ascii_lowercase, 5)
+    return ''.join(letras)
+
+# Función para generar registros aleatorios
+def generar_registros():
+    registros = []
+    ids_generados = set()
+    for i in range(100):
+        # Generar un ID único y ordenado
+        nuevo_id = None
+        while nuevo_id is None or nuevo_id in ids_generados:
+            nuevo_id = random.randint(1, 1000)
+        ids_generados.add(nuevo_id)
+
+        # Generar nombre aleatorio
+        nombre = generar_nombre()
+
+        # Generar edad aleatoria
+        edad = random.randint(18, 80)
+
+        # Generar si paga impuestos (verdadero o falso)
+        paga_impuestos = random.choice([True, False])
+
+        # Agregar el registro generado a la lista
+        registros.append((nuevo_id, nombre, edad, paga_impuestos))
+
+    # Ordenar los registros por ID
+    registros.sort(key=lambda x: x[0])
+    return registros
+
+# Función para buscar un registro por ID utilizando búsqueda binaria
+def buscar_por_id(registros, id_busqueda):
+    izquierda, derecha = 0, len(registros) - 1
+    while izquierda <= derecha:
+        medio = (izquierda + derecha) // 2
+        if registros[medio][0] == id_busqueda:
+            return registros[medio]
+        elif registros[medio][0] < id_busqueda:
+            izquierda = medio + 1
+        else:
+            derecha = medio - 1
+    return None
+
+# Función para buscar un registro por nombre utilizando búsqueda secuencial
+def buscar_por_nombre(registros, nombre_busqueda):
+    for registro in registros:
+        if registro[1] == nombre_busqueda:
+            return registro
+    return None
+
+# Función principal del programa
+def main():
+    registros = generar_registros()
+    n_registros = len(registros)
+    print(f"Se han creado {n_registros} registros.")
+    ultimo_registro = registros[-1]
+    print("Último registro creado:", ultimo_registro)
+
+    while True:
+        print("\nMenú:")
+        print("1. Buscar por ID")
+        print("2. Buscar por nombre")
+        print("3. Salir")
+
+        opcion = input("Seleccione una opción: ")
+
+        if opcion == "1":
+            id_buscar = int(input("Introduce el ID a buscar: "))
+            resultado = buscar_por_id(registros, id_buscar)
+            if resultado:
+                print("Registro encontrado:", resultado)
+            else:
+                print("Registro no encontrado.")
+
+        elif opcion == "2":
+            nombre_buscar = input("Introduce el nombre a buscar: ")
+            resultado = buscar_por_nombre(registros, nombre_buscar)
+            if resultado:
+                print("Registro encontrado:", resultado)
+            else:
+                print("Registro no encontrado.")
+
+        elif opcion == "3":
+
+          n=[10,100,1000,10000,100000,1000000]
+
+          tiempos = {'buscar_por_id': [], 'buscar_por_nombre': []}
+
+          for i in n:
+              registros = generar_registros()
+              inicio = time.perf_counter()
+              buscar_por_id(registros, i)
+              fin = time.perf_counter()
+              diferencia = fin - inicio
+              tiempos['buscar_por_id'].append(diferencia)
+
+              inicio = time.perf_counter()
+              buscar_por_nombre(registros, generar_nombre())
+              fin = time.perf_counter()
+              diferencia = fin - inicio
+              tiempos['buscar_por_nombre'].append(diferencia)
+
+          for tipo in tiempos:
+              print(f"tiempos de ejecucion ({tipo}):")
+              for i, t in zip(n, tiempos[tipo]):
+                  print(f"{i} -> {t} segundos")
+              print()
+
+          df = pd.DataFrame(tiempos, index=n)
+          df.index.name = 'n'
+          df.reset_index(inplace=True)
+
+          plt.plot(df['n'], df['buscar_por_id'], label='buscar_por_id')
+          plt.plot(df['n'], df['buscar_por_nombre'], label='buscar_por_nombre')
+          plt.legend()
+          plt.xlabel('n')
+          plt.ylabel('tiempo de ejecucion (segundos)')
+          plt.title('Tiempos de ejecucion')
+          plt.savefig('tiempos.png')
+
+if __name__ == "__main__":
+    main()
